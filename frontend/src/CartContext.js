@@ -7,8 +7,8 @@ const CartContext = createContext();
 export function CartProvider({ children }) {
   const { user } = useAuth();
 
-  // load guest cart from localStorage on startup
-  const [localItems, setLocalItemsw] = useState(() => {
+  // load guest cart from localStorage on startup so it survives page refresh
+  const [localItems, setLocalItems] = useState(() => {
     try {
       const saved = localStorage.getItem('guestCart');
       return saved ? JSON.parse(saved) : [];
@@ -28,8 +28,8 @@ export function CartProvider({ children }) {
   useEffect(() => {
     if (user) {
       fetchCart(user.id)
-          .then(res => setDbCart(res.data))
-          .catch(() => setDbCart(null));
+        .then(res => setDbCart(res.data))
+        .catch(() => setDbCart(null));
     } else {
       setDbCart(null);
     }
@@ -37,11 +37,11 @@ export function CartProvider({ children }) {
 
   // pick the right cart depending on auth status
   const cartItems = user
-      ? (dbCart?.items || []).map(item => ({
+    ? (dbCart?.items || []).map(item => ({
         product: item.product,
         quantity: item.quantity,
       }))
-      : localItems;
+    : localItems;
 
   const addToCart = async (product) => {
     if (user) {
@@ -52,7 +52,7 @@ export function CartProvider({ children }) {
         const existing = prev.find(i => i.product.id === product.id);
         if (existing) {
           return prev.map(i =>
-              i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+            i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
           );
         }
         return [...prev, { product, quantity: 1 }];
@@ -75,16 +75,17 @@ export function CartProvider({ children }) {
       setDbCart(res.data);
     } else {
       setLocalItems([]);
-      localStorage.removeItem('guestCart'); // clean up localStorage too
+      localStorage.removeItem('guestCart');
     }
   };
 
+  // total item count for the badge in navbar
   const totalCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-      <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, totalCount }}>
-        {children}
-      </CartContext.Provider>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, totalCount }}>
+      {children}
+    </CartContext.Provider>
   );
 }
 
